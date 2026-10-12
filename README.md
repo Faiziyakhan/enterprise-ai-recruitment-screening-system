@@ -127,46 +127,34 @@ Shortlist Email Hold Email Reject Email
 - **Email Dispatch:** Gmail OAuth2 API (label triggers, candidate updates, HR notifications)
 
 ---
-
 ## Evidence & Verified Visual Proof
 
 ### 1. End-to-End Candidate Case Study: David Wilson (Lead ML Engineer)
+| Ingested Resume Document | Candidate Shortlist Notification Email |
+| :---: | :---: |
+| ![Ingested Resume](Screenshot%202026-07-23%20141251.png) | ![Shortlist Notification](Screenshot%202026-09-16%20005405.png) |
 
-**Ingested Resume Document**
+| Automated HR Executive Alert Email | Live Applicant Tracking CRM Sync (Google Sheets) |
+| :---: | :---: |
+| ![HR Notification Email](Screenshot%202026-09-16%20005611.png) | ![Google Sheets CRM](Screenshot%202026-10-12%20180125.png) |
 
-![Ingested Resume](./screenshots/resume-input.png)
-
-**Candidate Shortlist Notification Email**
-
-![Shortlist Email](./screenshots/shortlist-email.png)
-
-**Automated HR Executive Alert Email**
-
-![HR Alert Email](./screenshots/hr-alert-email.png)
-
-**Live Applicant Tracking CRM Sync (Google Sheets)**
-
-![CRM Sync](./screenshots/crm-sync.png)
+---
 
 ### 2. Comprehensive Evaluation Outcomes (Hold & Reject Pathways)
+| Under Review / Hold Status Email | Application Rejection Notice Email |
+| :---: | :---: |
+| ![Hold Status Email](Screenshot%202026-09-16%20005927.png) | ![Reject Status Email](Screenshot%202026-09-16%20010350.png) |
 
-**Under Review / Hold Status Email**
-
-![Hold Email](./screenshots/hold-email.png)
-
-**Application Rejection Notice Email**
-
-![Reject Email](./screenshots/reject-email.png)
+---
 
 ### 3. Workflow Architecture & Execution Canvas
+| Full End-to-End Orchestration Topology (with Deduplication & HR Notify) |
+| :---: |
+| ![Complete n8n Architecture](Screenshot%202026-07-22%20001255.png) |
 
-**Full End-to-End Orchestration Topology (with Deduplication & HR Notify)**
-
-![Full Orchestration Topology](./screenshots/workflow-full-canvas.png)
-
-**Core Scoring & Decision Routing Canvas**
-
-![Scoring and Routing Canvas](./screenshots/scoring-routing-canvas.png)
+| Core Scoring & Decision Routing Canvas |
+| :---: |
+| ![Core Decision Canvas](Screenshot%202026-07-16%20181422.png) |
 
 ---
 
