@@ -1,0 +1,1244 @@
+{
+  "name": "Enterprise AI Recruitment & Candidate Screening System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "Label_4112807098209356109"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -224,
+        -144
+      ],
+      "id": "49a3d9fd-b437-45e7-82ac-1824005e1aaf",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{$json.id}}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        -144
+      ],
+      "id": "ae5844ad-4372-4991-9978-c4892923cdba",
+      "name": "Get a message",
+      "webhookId": "ccb7c1d7-4dfa-42c6-80c5-16085fea14f6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$binary.attachment_0.mimeType}}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d593e5f3-26fd-4b9f-85de-b8ffa6476750"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a483f656-c056-4617-b98b-5f83878cf557",
+                    "leftValue": "={{$binary.attachment_0.mimeType}}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DOCX"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e42ce815-78fd-478f-9050-9aee04300440",
+                    "leftValue": "={{$binary.attachment_0.mimeType}}",
+                    "rightValue": "image/png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PNG"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4d368f6a-a90e-4abb-bb88-55ab49bc49e1",
+                    "leftValue": "={{$binary.attachment_0.mimeType}}",
+                    "rightValue": "image/jpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JPG"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "27a257e9-3f97-41fe-8228-f7cac8155615",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3-flash-preview"
+        },
+        "text": "You are an expert ATS (Applicant Tracking System) resume parser.\n\nAnalyze the attached resume image carefully and extract only genuine candidate information.\n\nIgnore:\n- decorative text\n- lorem ipsum\n- placeholder content\n- fake sample text\n- background design elements\n- icons\n- graphics\n- watermarks\n\nReturn ONLY a valid JSON object.\n\nDo not include markdown, code fences, explanations, comments, or any extra text.\n\nUse exactly this schema:\n\n{\n  \"full_name\": \"string\",\n  \"email\": \"string\",\n  \"phone\": \"string\",\n  \"location\": \"string\",\n  \"current_role\": \"string\",\n  \"total_experience_years\": 0,\n  \"skills\": [],\n  \"education\": \"string\",\n  \"certifications\": [],\n  \"projects\": [],\n  \"companies_worked\": [],\n  \"key_achievements\": \"string\",\n  \"candidate_summary\": \"string\"\n}\n\nRules:\n\n- Extract only information that is clearly visible in the resume.\n- Never invent or guess missing information.\n- If a field is missing use:\n  - \"Not specified\" for text\n  - 0 for numbers\n  - [] for arrays\n- If any text looks like lorem ipsum, placeholder text, fake content or meaningless sample text, ignore it and return \"Not specified\".\n- Return only the JSON object.",
+        "inputType": "binary",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        -144
+      ],
+      "id": "f25b601e-18b6-4542-b2d6-74abbb8abd1f",
+      "name": "Analyze an image",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YCQ64bTHZ12vMvKp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.content.parts[0].text;\n\nconst cleaned = raw\n  .replace(/```json/g, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nconst resume = JSON.parse(cleaned);\n\nreturn {\n  json: resume\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        -144
+      ],
+      "id": "cb8c8729-038b-4552-beeb-b7ea3ecb93a7",
+      "name": "Code in JavaScript",
+      "retryOnFail": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert AI Recruitment Specialist.\n\nCandidate Information:\n\n{{ JSON.stringify($json) }}\n\nAnalyze this candidate and return ONLY valid JSON.\n\n{\n  \"candidate_score\": 0,\n  \"experience_score\": 0,\n  \"skills_score\": 0,\n  \"education_score\": 0,\n  \"communication_score\": 0,\n  \"recommendation\": \"Shortlist | Hold | Reject\",\n  \"reason\": \"\"\n}                                                                                                                             Return ONLY the fields defined by the Structured Output Parser.\nDo not return markdown or code fences.",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        -144
+      ],
+      "id": "2b8745c4-d354-4d84-bb87-fb193b5eb8f9",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        80
+      ],
+      "id": "3d5ffdc6-d742-4abb-bdf6-7a8a23ac35e4",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YCQ64bTHZ12vMvKp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1413284472,
+          "mode": "list",
+          "cachedResultName": "Sheet3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit#gid=1413284472"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Candidate Name": "={{ $('Code in JavaScript').item.json.full_name }}",
+            "Email": "={{ $('Code in JavaScript').item.json.email }}",
+            "current role": "={{ $('Code in JavaScript').item.json.current_role }}",
+            "experience ": "={{ $('Code in JavaScript').item.json.total_experience_years }}",
+            "Skills": "={{ $('Code in JavaScript').item.json.skills.join(', ') }}",
+            "Education": "={{ $('Code in JavaScript').item.json.education }}",
+            "Companies": "={{ $('Code in JavaScript').item.json.companies_worked.join(', ') }}",
+            "location": "={{ $('Code in JavaScript').item.json.location }}",
+            "Resume File": "={{ $('Switch').item.binary.attachment_0.fileName }}",
+            "Candidate Score": "={{ $('AI Agent').item.json.output.candidate_score }}",
+            "Skills Score": "={{ $('AI Agent').item.json.output.skills_score }}",
+            "Communication Score": "={{ $('AI Agent').item.json.output.communication_score }}",
+            "Recommendation": "={{ $('AI Agent').item.json.output.recommendation }}",
+            "Processed Time": "={{ $now }}",
+            "Experience Score": "={{ $('AI Agent').item.json.output.experience_score }}",
+            "Education Score": "={{ $('AI Agent').item.json.output.education_score }}",
+            "Reason": "={{ $('AI Agent').item.json.output.reason }}",
+            "phone": "={{ $('Code in JavaScript').item.json.phone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current role",
+              "displayName": "current role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "experience ",
+              "displayName": "experience ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Education",
+              "displayName": "Education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Companies",
+              "displayName": "Companies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Candidate Score",
+              "displayName": "Candidate Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience Score",
+              "displayName": "Experience Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills Score",
+              "displayName": "Skills Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Education Score",
+              "displayName": "Education Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Communication Score",
+              "displayName": "Communication Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommendation",
+              "displayName": "Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume File",
+              "displayName": "Resume File",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Processed Time",
+              "displayName": "Processed Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        -48
+      ],
+      "id": "e7ef091d-5fe8-4ce1-9f07-44eb39c0ae71",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "khZN3vpnL79parCO",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"candidate_score\": {\n      \"type\": \"number\"\n    },\n    \"experience_score\": {\n      \"type\": \"number\"\n    },\n    \"skills_score\": {\n      \"type\": \"number\"\n    },\n    \"education_score\": {\n      \"type\": \"number\"\n    },\n    \"communication_score\": {\n      \"type\": \"number\"\n    },\n    \"recommendation\": {\n      \"type\": \"string\"\n    },\n    \"reason\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"candidate_score\",\n    \"experience_score\",\n    \"skills_score\",\n    \"education_score\",\n    \"communication_score\",\n    \"recommendation\",\n    \"reason\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "c865fa5c-23f9-44f4-b8e9-631b282faab9",
+      "name": "Structured Output Parser",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "faiziyakhanwork@gmail.com",
+        "subject": "Application Status - Under Review",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>Application Under Review</title>\n</head>\n\n<body style=\"margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:40px 0;background:#f4f6f9;\">\n<tr>\n<td align=\"center\">\n\n<table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,0.08);\">\n\n<tr>\n<td style=\"background:#f59e0b;padding:30px;text-align:center;color:white;\">\n<h1 style=\"margin:0;\">AI Recruitment System</h1>\n<p style=\"margin-top:10px;\">Application Status Update</p>\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:35px;\">\n\n<h2 style=\"color:#d97706;margin-top:0;\">\nHello {{ $json[\"Candidate Name\"] }},\n</h2>\n\n<p style=\"font-size:16px;color:#444;line-height:1.8;\">\nThank you for applying to our company. Your resume has been successfully analyzed by our <strong>AI Recruitment System</strong>.\n</p>\n\n<div style=\"background:#fff8e6;border-left:6px solid #f59e0b;padding:18px;border-radius:6px;margin:25px 0;\">\n\n<h3 style=\"margin-top:0;color:#b45309;\">\nApplication Under Review\n</h3>\n\n<p style=\"margin-bottom:0;color:#444;line-height:1.8;\">\nYour application has passed the initial screening stage and is currently under review by our hiring team. Additional evaluation may be required before a final decision is made.\n</p>\n\n</div>\n\n<h3 style=\"color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:10px;\">\nResume Evaluation Summary\n</h3>\n\n<table width=\"100%\" cellpadding=\"12\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:15px;\">\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Candidate Score</strong></td>\n<td>{{ $json[\"Candidate Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Experience Score</strong></td>\n<td>{{ $json[\"Experience Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Skills Score</strong></td>\n<td>{{ $json[\"Skills Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Education Score</strong></td>\n<td>{{ $json[\"Education Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Communication Score</strong></td>\n<td>{{ $json[\"Communication Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Recommendation</strong></td>\n<td style=\"font-weight:bold;color:#d97706;\">\n{{ $json[\"Recommendation\"] }}\n</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>AI Assessment</strong></td>\n<td>{{ $json[\"Reason\"] }}</td>\n</tr>\n\n</table>\n\n<div style=\"margin-top:35px;padding:20px;background:#eef6ff;border-left:5px solid #3b82f6;border-radius:6px;\">\n\n<h3 style=\"margin-top:0;color:#1d4ed8;\">\nWhat Happens Next?\n</h3>\n\n<p style=\"color:#444;line-height:1.8;margin-bottom:0;\">\nOur HR team will carefully review your application. If additional information or clarification is required, we will contact you via email. A final hiring decision will be shared after the review is completed.\n</p>\n\n</div>\n\n<p style=\"margin-top:35px;color:#555;line-height:1.8;\">\nWe appreciate the time and effort you invested in your application and thank you for considering our organization as your next career opportunity.\n</p>\n\n<p style=\"margin-top:35px;\">\nKind Regards,<br>\n<strong>AI Recruitment Team</strong>\n</p>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"background:#1f2937;color:white;text-align:center;padding:18px;font-size:13px;\">\n© 2026 AI Recruitment System | Automated Candidate Screening\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n</table>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        -144
+      ],
+      "id": "aa6f57e9-daef-47b0-8057-d399a8455336",
+      "name": "Send Hold Email",
+      "webhookId": "5d34930a-c76b-45b9-9e6b-a97eef49f642",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "faiziyakhanwork@gmail.com",
+        "subject": "Application Status",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>Application Status Update</title>\n</head>\n\n<body style=\"margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:40px 0;background:#f4f6f9;\">\n<tr>\n<td align=\"center\">\n\n<table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,0.08);\">\n\n<tr>\n<td style=\"background:#dc2626;padding:30px;text-align:center;color:white;\">\n<h1 style=\"margin:0;\">AI Recruitment System</h1>\n<p style=\"margin-top:10px;\">Application Status Update</p>\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:35px;\">\n\n<h2 style=\"color:#dc2626;margin-top:0;\">\nHello {{ $json[\"Candidate Name\"] }},\n</h2>\n\n<p style=\"font-size:16px;color:#444;line-height:1.8;\">\nThank you for taking the time to apply for a position with our company. We appreciate your interest and the effort you invested in your application.\n</p>\n\n<div style=\"background:#fef2f2;border-left:6px solid #dc2626;padding:18px;border-radius:6px;margin:25px 0;\">\n\n<h3 style=\"margin-top:0;color:#b91c1c;\">\nApplication Update\n</h3>\n\n<p style=\"margin-bottom:0;color:#444;line-height:1.8;\">\nAfter carefully reviewing your profile, we have decided not to move forward with your application for this position at this time.\n</p>\n\n</div>\n\n<h3 style=\"color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:10px;\">\nResume Evaluation Summary\n</h3>\n\n<table width=\"100%\" cellpadding=\"12\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:15px;\">\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Candidate Score</strong></td>\n<td>{{ $json[\"Candidate Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Experience Score</strong></td>\n<td>{{ $json[\"Experience Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Skills Score</strong></td>\n<td>{{ $json[\"Skills Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Education Score</strong></td>\n<td>{{ $json[\"Education Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Communication Score</strong></td>\n<td>{{ $json[\"Communication Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Recommendation</strong></td>\n<td style=\"font-weight:bold;color:#dc2626;\">\n{{ $json[\"Recommendation\"] }}\n</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>AI Assessment</strong></td>\n<td>{{ $json[\"Reason\"] }}</td>\n</tr>\n\n</table>\n\n<div style=\"margin-top:35px;padding:20px;background:#eef6ff;border-left:5px solid #2563eb;border-radius:6px;\">\n\n<h3 style=\"margin-top:0;color:#1d4ed8;\">\nWe Encourage You to Apply Again\n</h3>\n\n<p style=\"color:#444;line-height:1.8;margin-bottom:0;\">\nAlthough you were not selected for this opportunity, we sincerely encourage you to continue developing your skills and apply again for future positions that match your experience and qualifications.\n</p>\n\n</div>\n\n<p style=\"margin-top:35px;color:#555;line-height:1.8;\">\nThank you once again for your interest in joining our organization. We wish you every success in your future career.\n</p>\n\n<p style=\"margin-top:35px;\">\nKind Regards,<br>\n<strong>AI Recruitment Team</strong>\n</p>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"background:#1f2937;color:white;text-align:center;padding:18px;font-size:13px;\">\n© 2026 AI Recruitment System | Automated Candidate Screening\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n</table>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        48
+      ],
+      "id": "22610dc7-bff3-4487-9385-3366f0a894e6",
+      "name": "Send Reject Email",
+      "webhookId": "7ce34c3c-1ecc-46ff-a3ad-6668fde6f8ee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "faiziyakhanwork@gmail.com",
+        "subject": "Congratulations! You Have Been Shortlisted for the Next Round.",
+        "message": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<title>Congratulations - You're Shortlisted</title>\n</head>\n\n<body style=\"margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;\">\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"padding:40px 0;background:#f4f6f9;\">\n<tr>\n<td align=\"center\">\n\n<table width=\"650\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,0.08);\">\n\n<tr>\n<td style=\"background:#16a34a;padding:30px;text-align:center;color:white;\">\n<h1 style=\"margin:0;\">AI Recruitment System</h1>\n<p style=\"margin-top:10px;\">Congratulations! You Have Been Shortlisted</p>\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:35px;\">\n\n<h2 style=\"color:#16a34a;margin-top:0;\">\nHello {{ $json[\"Candidate Name\"] }},\n</h2>\n\n<p style=\"font-size:16px;color:#444;line-height:1.8;\">\nCongratulations! We are pleased to inform you that your profile has been successfully shortlisted by our AI Recruitment System for the next stage of the recruitment process.\n</p>\n\n<div style=\"background:#ecfdf5;border-left:6px solid #16a34a;padding:18px;border-radius:6px;margin:25px 0;\">\n\n<h3 style=\"margin-top:0;color:#15803d;\">\nApplication Status: Shortlisted\n</h3>\n\n<p style=\"margin-bottom:0;color:#444;line-height:1.8;\">\nYour qualifications, experience and overall profile have met our evaluation criteria. Our HR team will contact you soon regarding the next steps.\n</p>\n\n</div>\n\n<h3 style=\"color:#1f2937;border-bottom:2px solid #e5e7eb;padding-bottom:10px;\">\nResume Evaluation Summary\n</h3>\n\n<table width=\"100%\" cellpadding=\"12\" cellspacing=\"0\" style=\"border-collapse:collapse;font-size:15px;\">\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Candidate Score</strong></td>\n<td>{{ $json[\"Candidate Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Experience Score</strong></td>\n<td>{{ $json[\"Experience Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Skills Score</strong></td>\n<td>{{ $json[\"Skills Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Education Score</strong></td>\n<td>{{ $json[\"Education Score\"] }}/100</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>Communication Score</strong></td>\n<td>{{ $json[\"Communication Score\"] }}/100</td>\n</tr>\n\n<tr>\n<td><strong>Recommendation</strong></td>\n<td style=\"color:#16a34a;font-weight:bold;\">\n{{ $json[\"Recommendation\"] }}\n</td>\n</tr>\n\n<tr style=\"background:#f9fafb;\">\n<td><strong>AI Assessment</strong></td>\n<td>{{ $json[\"Reason\"] }}</td>\n</tr>\n\n</table>\n\n<div style=\"margin-top:35px;padding:20px;background:#eef6ff;border-left:5px solid #2563eb;border-radius:6px;\">\n\n<h3 style=\"margin-top:0;color:#1d4ed8;\">\nNext Steps\n</h3>\n\n<p style=\"color:#444;line-height:1.8;margin-bottom:0;\">\nOur recruitment team will contact you shortly regarding interview scheduling and the remaining hiring process. Please keep an eye on your email inbox.\n</p>\n\n</div>\n\n<p style=\"margin-top:35px;color:#555;line-height:1.8;\">\nThank you for your interest in joining our organization. We look forward to speaking with you soon.\n</p>\n\n<p style=\"margin-top:35px;\">\nBest Regards,<br>\n<strong>AI Recruitment Team</strong>\n</p>\n\n</td>\n</tr>\n\n<tr>\n<td style=\"background:#1f2937;color:white;text-align:center;padding:18px;font-size:13px;\">\n© 2026 AI Recruitment System | Automated Candidate Screening\n</td>\n</tr>\n\n</table>\n\n</td>\n</tr>\n</table>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2368,
+        -336
+      ],
+      "id": "98e228d9-9e20-424d-9932-58d1d3528f48",
+      "name": "Send Shortlist Email",
+      "webhookId": "b7cf1508-3772-45e8-bad8-3e3f0182708c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1413284472,
+          "mode": "list",
+          "cachedResultName": "Sheet3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit#gid=1413284472"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Email",
+              "lookupValue": "={{ $('Code in JavaScript').item.json.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1248,
+        -144
+      ],
+      "id": "32d77b1a-b129-4227-8589-07958ab94528",
+      "name": "Check Existing Candidate",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleApi": {
+          "id": "jPxT6sAWdI8lTXyL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fa1a14ff-1d2c-4f9c-94a8-c75206a5877e",
+              "leftValue": "={{ $json.row_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        -144
+      ],
+      "id": "3f0b3e9d-ad46-48e4-b672-662cf4614327",
+      "name": "Candidate Exists?"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E",
+          "mode": "list",
+          "cachedResultName": "AI Lead CRM",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1413284472,
+          "mode": "list",
+          "cachedResultName": "Sheet3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BU57BKFlLW_R8TlxOUb5iEq8I7vIxODQMC-fFlp3p4E/edit#gid=1413284472"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Candidate Name": "={{ $('Code in JavaScript').item.json.full_name }}",
+            "Email": "={{ $('Code in JavaScript').item.json.email }}",
+            "phone": "={{ $('Code in JavaScript').item.json.phone }}",
+            "location": "={{ $('Code in JavaScript').item.json.location }}",
+            "current role": "={{ $('Code in JavaScript').item.json.current_role }}",
+            "experience ": "={{ $('Code in JavaScript').item.json.total_experience_years }}",
+            "Skills": "={{ $('Code in JavaScript').item.json.skills.join(', ') }}",
+            "Education": "={{ $('Code in JavaScript').item.json.education }}",
+            "Companies": "={{ $('Code in JavaScript').item.json.companies_worked.join(', ') }}",
+            "Candidate Score": "={{ $('AI Agent').item.json.output.candidate_score }}",
+            "Experience Score": "={{ $('AI Agent').item.json.output.experience_score }}",
+            "Skills Score": "={{ $('AI Agent').item.json.output.skills_score }}",
+            "Education Score": "={{ $('AI Agent').item.json.output.education_score }}",
+            "Communication Score": "={{ $('AI Agent').item.json.output.communication_score }}",
+            "Recommendation": "={{ $('AI Agent').item.json.output.recommendation }}",
+            "Reason": "={{ $('AI Agent').item.json.output.reason }}",
+            "Resume File": "={{ $('Switch').item.binary.attachment_0.fileName }}",
+            "Processed Time": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Candidate Name",
+              "displayName": "Candidate Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "current role",
+              "displayName": "current role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "experience ",
+              "displayName": "experience ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Education",
+              "displayName": "Education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Companies",
+              "displayName": "Companies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Candidate Score",
+              "displayName": "Candidate Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Experience Score",
+              "displayName": "Experience Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills Score",
+              "displayName": "Skills Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Education Score",
+              "displayName": "Education Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Communication Score",
+              "displayName": "Communication Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recommendation",
+              "displayName": "Recommendation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resume File",
+              "displayName": "Resume File",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Processed Time",
+              "displayName": "Processed Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        -240
+      ],
+      "id": "ab88a9f4-850c-41d2-b642-259d41deb650",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "jPxT6sAWdI8lTXyL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1224aecc-7708-450b-b50d-bf387c33a360",
+              "leftValue": "={{ $json[\"Recommendation\"].trim() }}",
+              "rightValue": "Shortlist",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        -144
+      ],
+      "id": "edbe2581-05bd-4b3c-8431-07a7572da4ba",
+      "name": "Recommendation IF"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "80da4b57-5724-4330-b1ca-c245ba38adde",
+              "leftValue": "={{ $json.Recommendation }}",
+              "rightValue": "Hold",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2144,
+        -48
+      ],
+      "id": "58cd571e-ef04-4770-8edc-ab1a21fc71f7",
+      "name": "Recommendation IF 2"
+    },
+    {
+      "parameters": {
+        "sendTo": "faiziyakhanwork@gmail.com",
+        "subject": "=📄 New Candidate Processed - {{ $('Code in JavaScript').item.json.full_name }}",
+        "message": "=<h2>🤖 AI Recruitment System Notification</h2>  <p><b>Candidate Name:</b> {{ $('Code in JavaScript').item.json.full_name }}</p>  <p><b>Email:</b> {{ $('Code in JavaScript').item.json.email }}</p>  <p><b>Phone:</b> {{ $('Code in JavaScript').item.json.phone }}</p>  <p><b>Current Role:</b> {{ $('Code in JavaScript').item.json.current_role }}</p>  <p><b>Experience:</b> {{ $('Code in JavaScript').item.json.total_experience_years }} Years</p>  <p><b>Skills:</b><br> {{ $('Code in JavaScript').item.json.skills.join(', ') }}</p>  <hr>  <h3>AI Evaluation</h3>  <p><b>Candidate Score:</b> {{ $('AI Agent').item.json.output.candidate_score }}/10</p>  <p><b>Recommendation:</b> <b>{{ $('AI Agent').item.json.output.recommendation }}</b></p>  <p><b>Reason:</b><br> {{ $('AI Agent').item.json.output.reason }}</p>  <hr>  <p><b>Resume File:</b> {{ $('Switch').item.binary.attachment_0.fileName }}</p>  <p><b>Processed At:</b> {{ $now }}</p>  <p>Generated automatically by AI Recruitment System.</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2592,
+        -144
+      ],
+      "id": "32a7bf19-a160-4698-bed2-947bbad128ee",
+      "name": "Notify HR",
+      "webhookId": "1d7c48ba-2125-4556-b391-55b00bb3c41a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "bQ4I3SKL85Y6Fwi2",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Existing Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Recommendation IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Existing Candidate": {
+      "main": [
+        [
+          {
+            "node": "Candidate Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidate Exists?": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Recommendation IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recommendation IF": {
+      "main": [
+        [
+          {
+            "node": "Send Shortlist Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recommendation IF 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recommendation IF 2": {
+      "main": [
+        [
+          {
+            "node": "Send Hold Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reject Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Shortlist Email": {
+      "main": [
+        [
+          {
+            "node": "Notify HR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Hold Email": {
+      "main": [
+        [
+          {
+            "node": "Notify HR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reject Email": {
+      "main": [
+        [
+          {
+            "node": "Notify HR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "27da7321-198a-4f16-90e8-c553cc8ffb93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eb197799cbd0c2dc65911762932d57237c992fd519412d907f25906c0f0e8384"
+  },
+  "nodeGroups": [],
+  "id": "KGRVvcXzWjQo8yfs",
+  "tags": []
+}
