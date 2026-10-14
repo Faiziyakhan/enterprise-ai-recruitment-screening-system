@@ -141,9 +141,9 @@ Shortlist Email Hold Email Reject Email
 ---
 
 ### 2. Comprehensive Evaluation Outcomes (Hold & Reject Pathways)
-| Under Review / Hold Status Email | Application Rejection Notice Email |
-| :---: | :---: |
-| ![Hold Status Email](Screenshot%202026-09-16%20005927.png) | ![Reject Status Email](Screenshot%202026-09-16%20010350.png) |
+| Under Review / Hold Status Email | Rejection Notice (Polite Follow-up) | Rejection Assessment (Low Rubric Score) |
+| :---: | :---: | :---: |
+| ![Hold Status Email](Screenshot%202026-09-16%20005927.png) | ![Reject Polite Notice](Screenshot%202026-09-16%20010350.png) | ![Reject Evaluation Email](Screenshot%202026-09-16%20010135.png) |
 
 ---
 
